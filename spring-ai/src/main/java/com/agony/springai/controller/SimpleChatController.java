@@ -1,0 +1,33 @@
+package com.agony.springai.controller;
+
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * @author: Agony
+ * @create: 2026/3/15 11:38
+ * @describe:
+ */
+@RestController
+@RequestMapping("/simpleChat")
+public class SimpleChatController {
+
+    private final ChatClient chatClient;
+
+    // ChatClient.Builder 由 Spring AI 自动注册，直接注入即可
+    public SimpleChatController(ChatClient.Builder builder) {
+        this.chatClient = builder.build();
+    }
+
+    @GetMapping
+    public String chat(@RequestParam String message) {
+        return chatClient.prompt()
+                .user(message)
+                .call()
+                .content();
+    }
+
+}
