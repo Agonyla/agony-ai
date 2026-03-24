@@ -22,6 +22,7 @@ springdoc:
   api-docs:
     path: /v3/api-docs
   group-configs:
-    - group: 'default'
-      paths-to-match: '/**'
-      packages-to-scan: com.agony.springai.controller
+    - group: 'chatClient'
+      packages-to-scan: com.agony.springai.controller.chatClient
+    - group: 'prompt'
+      packages-to-scan: com.agony.springai.controller.prompt

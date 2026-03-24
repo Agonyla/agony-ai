@@ -1,4 +1,4 @@
-package com.agony.springai.controller;
+package com.agony.springai.controller.chatClient;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.ChatOptions;
