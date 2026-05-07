@@ -1,4 +1,4 @@
-package com.agony.springai.controller;
+package com.agony.springai.controller.structured;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.springframework.ai.chat.client.ChatClient;

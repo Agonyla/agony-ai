@@ -1,4 +1,4 @@
-package com.agony.springai.controller;
+package com.agony.springai.controller.structured;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.core.ParameterizedTypeReference;
