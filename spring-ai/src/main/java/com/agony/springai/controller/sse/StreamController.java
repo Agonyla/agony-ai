@@ -11,10 +11,10 @@ import reactor.core.publisher.Flux;
 /**
  * @author: Agony
  * @create: 2026/5/8 19:14
- * @describe:
+ * @describe: 流式对话
  */
 @RestController
-@RequestMapping("/stream")
+@RequestMapping("/api/stream")
 public class StreamController {
 
     private final ChatClient chatClient;
