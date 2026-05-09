@@ -13,6 +13,32 @@ spring:
   profiles:
     active: local
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dbtest
+    username: postgres
+    password: 19991209
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+#spring:
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/jc-ai?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+#    username: root
+#    password: your_password
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#  jpa:
+#    hibernate:
+#      ddl-auto: none        # 生产用 none，表结构手动建
+#    show-sql: true
+#    open-in-view: false
+#    database-platform: org.hibernate.dialect.MySQLDialect
+
 # springdoc-openapi项目配置
 springdoc:
   swagger-ui:

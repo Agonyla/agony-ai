@@ -18,6 +18,12 @@ public class Test {
         System.out.println("-------------------");
         System.out.println(test1);
         System.out.println("-------------------");
+
+        String name = "agony";
+        String formatName = String.format("""
+                hi, my name is %s""", name);
+
+        System.out.println(formatName);
     }
 
 }
