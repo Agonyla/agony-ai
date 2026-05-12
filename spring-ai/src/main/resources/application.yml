@@ -72,3 +72,7 @@ springdoc:
       packages-to-scan: com.agony.springai.controller.prompt
     - group: 'sse'
       packages-to-scan: com.agony.spirngai.controller.sse
+
+#logging:
+#  level:
+#    org.springframework.ai.chat.client.advisor: DEBUG
