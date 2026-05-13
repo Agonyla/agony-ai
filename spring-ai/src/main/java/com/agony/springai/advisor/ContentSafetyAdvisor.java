@@ -50,7 +50,7 @@ public class ContentSafetyAdvisor implements CallAdvisor {
         if (input == null) {
             return false;
         }
-        return BLOCKED_KEYWORDS.stream().allMatch(input::contains);
+        return BLOCKED_KEYWORDS.stream().anyMatch(input::contains);
     }
 
     private ChatClientResponse buildSafeResponse(ChatClientRequest request, String message) {
