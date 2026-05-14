@@ -1,4 +1,4 @@
-package com.agony.springaialibaba.controller;
+package com.agony.springaialibaba.controller.chat;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
