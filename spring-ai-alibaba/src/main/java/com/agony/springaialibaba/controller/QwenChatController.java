@@ -3,6 +3,7 @@ package com.agony.springaialibaba.controller;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,7 +37,7 @@ public class QwenChatController {
     }
 
     // 流式输出
-    @GetMapping(value = "/stream", produces = "text/event-stream")
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> stream(@RequestParam String message) {
         return chatClient.prompt()
                 .user(message)
@@ -53,9 +54,9 @@ public class QwenChatController {
         return chatClient.prompt()
                 .user(message)
                 .options(DashScopeChatOptions.builder()
-                        .withModel(model)
-                        .withTemperature(0.7)
-                        .withMaxToken(1000)
+                        .model(model)
+                        .temperature(0.7)
+                        .maxToken(1000)
                         .build())
                 .call()
                 .content();
