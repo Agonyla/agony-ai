@@ -10,6 +10,12 @@ spring:
           model: qwen-plus             # 默认使用 qwen-max
           temperature: 0.7
           max-tokens: 2048
+      retry:
+        max-attempts: 20       # 默认 10，图片生成慢时不够用
+        backoff:
+          initial-interval: 3s # 首次轮询等待时间
+          multiplier: 2        # 不要设太大，否则间隔迅速拉长
+          max-interval: 15s    # 最大轮询间隔
 
   profiles:
     active: local
