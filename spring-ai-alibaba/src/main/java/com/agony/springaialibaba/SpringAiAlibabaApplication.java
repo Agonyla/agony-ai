@@ -2,6 +2,7 @@ package com.agony.springaialibaba;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.retry.annotation.EnableRetry;
 
 /**
  * @author: Agony
@@ -9,6 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @describe:
  */
 @SpringBootApplication
+@EnableRetry
 public class SpringAiAlibabaApplication {
 
     public static void main(String[] args) {

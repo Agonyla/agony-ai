@@ -69,3 +69,20 @@ springdoc:
       packages-to-scan: com.agony.springaialibaba.controller
       paths-to-match:
         - "/**"
+
+# 熔断器配置
+resilience4j:
+  circuitbreaker:
+    instances:
+      aiService:
+        sliding-window-size: 10           # 统计最近 10 次调用
+        failure-rate-threshold: 50        # 失败率超过 50% 触发熔断
+        wait-duration-in-open-state: 30s  # 熔断后等待 30s 再尝试半开
+        permitted-number-of-calls-in-half-open-state: 3  # 半开状态测试 3 次
+  retry:
+    instances:
+      aiService:
+        max-attempts: 3
+        wait-duration: 1s
+        retry-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
