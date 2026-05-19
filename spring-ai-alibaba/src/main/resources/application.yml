@@ -58,6 +58,7 @@ app:
 
 # springdoc-openapi项目配置
 springdoc:
+  override-with-generic-response: false
   swagger-ui:
     path: /swagger-ui.html
     tags-sorter: alpha
