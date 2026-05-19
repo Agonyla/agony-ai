@@ -30,6 +30,10 @@ spring:
         options:
           model: kimi-k2.6 # deepseek-chat
 
+  # Spring MVC 请求线程自动使用虚拟线程
+  threads:
+    virtual:
+      enabled: true
 
   profiles:
     active: local
