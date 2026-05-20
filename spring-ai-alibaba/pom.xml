@@ -122,6 +122,14 @@
             <artifactId>httpclient5</artifactId>
         </dependency>
 
+        <!-- rag 向量依赖 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-advisors-vector-store</artifactId>
+            <version>1.1.2</version>
+        </dependency>
+
+
     </dependencies>
     <build>
         <plugins>
