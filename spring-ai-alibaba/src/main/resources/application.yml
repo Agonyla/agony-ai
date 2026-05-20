@@ -6,10 +6,21 @@ spring:
     exclude:
       - org.springframework.ai.model.chat.client.autoconfigure.ChatClientAutoConfiguration
       - org.springframework.ai.model.openai.autoconfigure.OpenAiImageAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration
+
+  # 数据库
+  datasource:
+    url: jdbc:postgresql://localhost:5432/vectordb
+    username: postgres
+    password: 19991209
+
   ai:
     # 通义千问
     dashscope:
       api-key: ${DASHSCOPE_API_KEY}   # 从环境变量读取
+      embedding:
+        options:
+          model: text-embedding-v3  # 通义 Embedding 模型
       chat:
         options:
           model: qwen-plus             # 默认使用 qwen-max
@@ -21,6 +32,14 @@ spring:
           initial-interval: 3s # 首次轮询等待时间
           multiplier: 2        # 不要设太大，否则间隔迅速拉长
           max-interval: 15s    # 最大轮询间隔
+
+    # PGVector
+    vectorstore:
+      pgvector:
+        initialize-schema: false          # 自动建向量表，第一次启动后可关掉，需要先用postgre 的stackbuilder 安装vector.control。
+        index-type: HNSW                 # HNSW 索引，查询速度快
+        distance-type: COSINE_DISTANCE   # 余弦相似度
+        dimensions: 1024                 # text-embedding-v3 的向量维度是 1024，别填错，填错了报错很难排查
 
     # kimi
     openai:
