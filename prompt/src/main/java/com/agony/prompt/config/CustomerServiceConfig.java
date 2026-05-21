@@ -13,8 +13,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CustomerServiceConfig {
 
-    @Bean
-    public ChatClient customerServiceClient(DashScopeChatModel chatModel) {
+    @Bean("customerAiServiceClient")
+    public ChatClient customerAiServiceClient(DashScopeChatModel chatModel) {
         return ChatClient.builder(chatModel)
                 .defaultSystem("""
                         【角色】
