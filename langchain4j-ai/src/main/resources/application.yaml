@@ -1,0 +1,40 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: langchain4j-ai
+
+  profiles:
+    active: local
+
+
+langchain4j:
+  open-ai:
+    # base-url 必须写在每个子节点下，顶层写不生效（Starter 不读）
+    chat-model:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: ${DASHSCOPE_API_KEY}   # 从环境变量读，不要硬编码
+      model-name: qwen-plus
+      temperature: 0.7
+      max-tokens: 2048
+    streaming-chat-model:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: ${DASHSCOPE_API_KEY}
+      model-name: qwen-plus
+
+
+# springdoc-openapi项目配置
+springdoc:
+  override-with-generic-response: false
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  group-configs:
+    - group: 'default'
+      packages-to-scan: com.agony.langchain4jai.controller
+      paths-to-match:
+        - "/**"
