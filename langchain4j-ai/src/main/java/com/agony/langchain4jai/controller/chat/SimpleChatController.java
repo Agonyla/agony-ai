@@ -1,4 +1,4 @@
-package com.agony.langchain4jai.controller;
+package com.agony.langchain4jai.controller.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
 import org.springframework.web.bind.annotation.GetMapping;
