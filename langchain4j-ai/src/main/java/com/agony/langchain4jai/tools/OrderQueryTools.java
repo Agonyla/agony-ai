@@ -4,17 +4,54 @@ import com.agony.langchain4jai.model.DateRange;
 import com.agony.langchain4jai.model.OrderStatus;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author: Agony
  * @create: 2026/5/28 11:19
  * @describe:
  */
+@Slf4j
 @Component
 public class OrderQueryTools {
+
+    // Mock 数据
+    private static final Map<String, String[]> MOCK_ORDER_DETAIL = Map.of(
+            "ORD20240101001", new String[]{"已发货", "2024-01-01 10:00", "2024-01-05", "顺丰 SF123456789"},
+            "ORD20240101002", new String[]{"待付款", "2024-01-01 11:30", "-", "-"},
+            "ORD20240101003", new String[]{"已完成", "2024-01-01 09:00", "2024-01-04", "圆通 YT987654321"}
+    );
+
+    @Tool("根据订单号查询订单状态和物流信息")
+    public String queryOrderStatus(
+            @P("订单号，格式为 ORD 开头后接11位数字，如 ORD20240101001") String orderId) {
+
+        // 参数校验
+        if (orderId == null || !orderId.matches("ORD\\d{11}")) {
+            return "错误：订单号格式不合法，请提供正确的订单号（ORD开头后接11位数字）";
+        }
+
+        try {
+            String[] order = MOCK_ORDER_DETAIL.get(orderId);
+
+            if (order == null) {
+                return "未找到订单：" + orderId + "，请确认订单号是否正确";
+            }
+
+            return String.format(
+                    "订单号：%s\n状态：%s\n下单时间：%s\n预计送达：%s\n物流：%s",
+                    orderId, order[0], order[1], order[2], order[3]);
+
+        } catch (Exception e) {
+            log.error("查询订单失败：{}", orderId, e);
+            return "查询订单时发生错误，请稍后重试或联系人工客服";
+            // 只返回用户友好的错误信息，不暴露异常细节
+        }
+    }
 
     // 基础类型
     @Tool("根据用户ID查询用户信息，返回用户名和注册时间")
