@@ -1,6 +1,6 @@
 package com.agony.langchain4jai.service;
 
-import com.agony.langchain4jai.entity.TenantPrompt;
+import com.agony.langchain4jai.model.TenantPrompt;
 import com.agony.langchain4jai.repository.TenantPromptRepository;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;

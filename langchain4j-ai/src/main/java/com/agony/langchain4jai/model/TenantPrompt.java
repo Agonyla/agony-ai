@@ -1,4 +1,4 @@
-package com.agony.langchain4jai.entity;
+package com.agony.langchain4jai.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
