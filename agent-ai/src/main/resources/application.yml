@@ -1,0 +1,60 @@
+server:
+  port: 8084
+
+spring:
+  profiles:
+    active: local
+
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.model.chat.client.autoconfigure.ChatClientAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiImageAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration
+
+  # 数据库
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dbtest
+    username: postgres
+    password: 19991209
+
+  ai:
+    # 通义千问
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY}   # 从环境变量读取
+      embedding:
+        options:
+          model: text-embedding-v3  # 通义 Embedding 模型
+      chat:
+        options:
+          model: qwen-plus             # 默认使用 qwen-max
+          temperature: 0.7
+          max-tokens: 2048
+
+    # kimi
+    openai:
+      api-key: ${DASHSCOPE_API_KEY}
+      base-url: https://dashscope.aliyuncs.com/compatible-mode  # https://api.deepseek.com
+      chat:
+        options:
+          model: kimi-k2.6 # deepseek-chat
+
+  # Spring MVC 请求线程自动使用虚拟线程
+  threads:
+    virtual:
+      enabled: true
+
+
+# springdoc-openapi项目配置
+springdoc:
+  override-with-generic-response: false
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  group-configs:
+    - group: 'default'
+      packages-to-scan: com.agony.prompt.controller
+      paths-to-match:
+        - "/**"
