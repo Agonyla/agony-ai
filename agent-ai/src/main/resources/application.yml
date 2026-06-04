@@ -55,6 +55,6 @@ springdoc:
     path: /v3/api-docs
   group-configs:
     - group: 'default'
-      packages-to-scan: com.agony.prompt.controller
+      packages-to-scan: com.agony.agent.controller
       paths-to-match:
         - "/**"
