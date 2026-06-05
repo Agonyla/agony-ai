@@ -1,6 +1,10 @@
 server:
   port: 8084
 
+logging:
+  level:
+    org.springframework.ai: DEBUG
+
 spring:
   profiles:
     active: local
