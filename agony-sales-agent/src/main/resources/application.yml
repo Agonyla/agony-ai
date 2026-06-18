@@ -1,0 +1,116 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: agony-sales-agent
+  main:
+    web-application-type: servlet   # 同时引了 webflux 时强制使用 servlet 模式，避免 actuator 端点映射异常
+  #  data:
+  #    redis:
+  #      host: 117.72.56.40
+  #      port: 6379
+  #      password: jichi1234   # 如果 Redis 设了密码就打开这行
+  #      database: 0
+
+
+  profiles:
+    active: local
+
+  # application.yml 数据源配置
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dbtest
+    username: postgres
+    password: 19991209
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+
+  # SQL 初始化（建表 + 测试数据，IF NOT EXISTS + INSERT IGNORE 安全重复执行）
+  #  sql:
+  #    init:
+  #      mode: always
+  #      schema-locations: classpath:db/schema.sql
+  #      data-locations: classpath:db/data.sql
+
+  # JPA
+  jpa:
+    hibernate:
+      ddl-auto: update   # 开发环境自动建表，生产改为 validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    defer-datasource-initialization: true  # 等 JPA 初始化后再执行 SQL 脚本
+
+
+langchain4j:
+  open-ai:
+    # base-url 必须写在每个子节点下，顶层写不生效（Starter 不读）
+    chat-model:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: ${DASHSCOPE_API_KEY}
+      model-name: qwen-plus
+      temperature: 0.1
+      max-tokens: 2048
+    streaming-chat-model:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: ${DASHSCOPE_API_KEY}
+      model-name: qwen-plus
+      temperature: 0.1
+      max-tokens: 2048
+
+
+# Sa-Token 配置（轻量权限框架）
+#sa-token:
+#  token-name: Authorization
+#  timeout: 86400
+#  is-concurrent: true
+#  is-share: true
+#  token-style: uuid
+#  is-log: false
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+  endpoint:
+    health:
+      show-details: always
+
+
+# 应用自定义配置
+#sales-agent:
+#  tool:
+#    anomaly-threshold-days: 5
+#    trend-drop-threshold: 0.3
+#
+#logging:
+#  level:
+#    com.jichi.salesAgent: DEBUG
+#    dev.langchain4j: INFO
+#app:
+#  auth:
+#    enabled: false
+
+# springdoc-openapi项目配置
+springdoc:
+  override-with-generic-response: false
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  group-configs:
+    - group: 'default'
+      packages-to-scan: com.agony.salesAgent.controller
+      paths-to-match:
+        - "/**"
