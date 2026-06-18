@@ -30,16 +30,16 @@ spring:
 
 
   # SQL 初始化（建表 + 测试数据，IF NOT EXISTS + INSERT IGNORE 安全重复执行）
-  #  sql:
-  #    init:
-  #      mode: always
-  #      schema-locations: classpath:db/schema.sql
-  #      data-locations: classpath:db/data.sql
+  sql:
+    init:
+      mode: always
+      #      schema-locations: classpath:db/schema.sql
+      data-locations: classpath:db/data.sql
 
   # JPA
   jpa:
     hibernate:
-      ddl-auto: update   # 开发环境自动建表，生产改为 validate
+      ddl-auto: none   # 开发环境自动建表，生产改为 validate
     show-sql: false
     properties:
       hibernate:
@@ -94,7 +94,7 @@ management:
 #
 #logging:
 #  level:
-#    com.jichi.salesAgent: DEBUG
+#    com.agony.salesAgent: DEBUG
 #    dev.langchain4j: INFO
 #app:
 #  auth:
