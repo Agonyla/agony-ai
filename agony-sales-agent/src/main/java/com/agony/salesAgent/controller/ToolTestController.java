@@ -2,6 +2,7 @@ package com.agony.salesAgent.controller;
 
 import com.agony.salesAgent.tools.SalesQueryTool;
 import com.agony.salesAgent.tools.SalesSummaryTool;
+import com.agony.salesAgent.tools.SalesTrendTool;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +21,7 @@ public class ToolTestController {
 
     private final SalesQueryTool salesQueryTool;
     private final SalesSummaryTool salesSummaryTool;
+    private final SalesTrendTool salesTrendTool;
 
     // -------- 工具一 --------
     record QueryRequest(
@@ -63,5 +65,34 @@ public class ToolTestController {
     @PostMapping("/top-products")
     public String topProducts(@RequestBody ProductRankRequest req) {
         return salesSummaryTool.getTopProducts(req.startDate(), req.endDate(), req.topN());
+    }
+
+    // -------- 工具三 --------
+    record MomRequest(String currentStart, String currentEnd,
+                      String prevStart, String prevEnd, String regionName) {
+    }
+
+    record YoyRequest(String startDate, String endDate, String regionName) {
+    }
+
+    record TrendRequest(int months, String regionName) {
+    }
+
+    @PostMapping("/month-over-month")
+    public String monthOverMonth(@RequestBody MomRequest req) {
+        return salesTrendTool.calcMonthOverMonth(
+                req.currentStart(), req.currentEnd(),
+                req.prevStart(), req.prevEnd(), req.regionName());
+    }
+
+    @PostMapping("/year-over-year")
+    public String yearOverYear(@RequestBody YoyRequest req) {
+        return salesTrendTool.calcYearOverYear(
+                req.startDate(), req.endDate(), req.regionName());
+    }
+
+    @PostMapping("/monthly-trend")
+    public String monthlyTrend(@RequestBody TrendRequest req) {
+        return salesTrendTool.getMonthlyTrend(req.months(), req.regionName());
     }
 }
