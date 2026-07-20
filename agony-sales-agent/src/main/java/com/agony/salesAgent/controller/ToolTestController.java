@@ -1,9 +1,6 @@
 package com.agony.salesAgent.controller;
 
-import com.agony.salesAgent.tools.ChartGeneratorTool;
-import com.agony.salesAgent.tools.SalesQueryTool;
-import com.agony.salesAgent.tools.SalesSummaryTool;
-import com.agony.salesAgent.tools.SalesTrendTool;
+import com.agony.salesAgent.tools.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,6 +21,7 @@ public class ToolTestController {
     private final SalesSummaryTool salesSummaryTool;
     private final SalesTrendTool salesTrendTool;
     private final ChartGeneratorTool chartGeneratorTool;
+    private final AnomalyDetectionTool anomalyDetectionTool;
 
     // -------- 工具一 --------
     record QueryRequest(
@@ -123,5 +121,11 @@ public class ToolTestController {
     public String pieChart(@RequestBody PieChartRequest req) {
         return chartGeneratorTool.generatePieChart(
                 req.dimension(), req.startDate(), req.endDate(), req.title());
+    }
+
+    // -------- 工具五 --------
+    @PostMapping("/detect-anomalies")
+    public String detectAnomalies() {
+        return anomalyDetectionTool.detectAllAnomalies();
     }
 }
