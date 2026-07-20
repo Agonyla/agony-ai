@@ -4,6 +4,7 @@ import com.agony.salesAgent.memory.PostgresChatMemoryStore;
 import com.agony.salesAgent.tools.*;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.service.AiServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 public class SalesAgentConfig {
 
     private final ChatModel chatLanguageModel;
+    private final StreamingChatModel streamingLanguageModel;
     private final SalesQueryTool salesQueryTool;
     private final SalesSummaryTool salesSummaryTool;
     private final SalesTrendTool salesTrendTool;
@@ -30,6 +32,7 @@ public class SalesAgentConfig {
     public SalesAgent salesAgent() {
         return AiServices.builder(SalesAgent.class)
                 .chatModel(chatLanguageModel)
+                .streamingChatModel(streamingLanguageModel)
                 .tools(salesQueryTool,
                         salesSummaryTool,
                         salesTrendTool,
