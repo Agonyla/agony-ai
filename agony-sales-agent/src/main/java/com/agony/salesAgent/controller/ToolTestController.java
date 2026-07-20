@@ -1,5 +1,6 @@
 package com.agony.salesAgent.controller;
 
+import com.agony.salesAgent.tools.ChartGeneratorTool;
 import com.agony.salesAgent.tools.SalesQueryTool;
 import com.agony.salesAgent.tools.SalesSummaryTool;
 import com.agony.salesAgent.tools.SalesTrendTool;
@@ -22,6 +23,7 @@ public class ToolTestController {
     private final SalesQueryTool salesQueryTool;
     private final SalesSummaryTool salesSummaryTool;
     private final SalesTrendTool salesTrendTool;
+    private final ChartGeneratorTool chartGeneratorTool;
 
     // -------- 工具一 --------
     record QueryRequest(
@@ -94,5 +96,32 @@ public class ToolTestController {
     @PostMapping("/monthly-trend")
     public String monthlyTrend(@RequestBody TrendRequest req) {
         return salesTrendTool.getMonthlyTrend(req.months(), req.regionName());
+    }
+
+    // -------- 工具四 --------
+    record LineChartRequest(int months, String regionName, String title) {
+    }
+
+    record BarChartRequest(String dimension, String startDate, String endDate, String title) {
+    }
+
+    record PieChartRequest(String dimension, String startDate, String endDate, String title) {
+    }
+
+    @PostMapping("/line-chart")
+    public String lineChart(@RequestBody LineChartRequest req) {
+        return chartGeneratorTool.generateLineChart(req.months(), req.regionName(), req.title());
+    }
+
+    @PostMapping("/bar-chart")
+    public String barChart(@RequestBody BarChartRequest req) {
+        return chartGeneratorTool.generateBarChart(
+                req.dimension(), req.startDate(), req.endDate(), req.title());
+    }
+
+    @PostMapping("/pie-chart")
+    public String pieChart(@RequestBody PieChartRequest req) {
+        return chartGeneratorTool.generatePieChart(
+                req.dimension(), req.startDate(), req.endDate(), req.title());
     }
 }
