@@ -12,6 +12,7 @@ import com.agony.salesAgent.repository.ProductRepository;
 import com.agony.salesAgent.repository.SalesOrderRepository;
 import com.agony.salesAgent.repository.SalesRegionRepository;
 import com.agony.salesAgent.repository.SalesRepRepository;
+import com.agony.salesAgent.security.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,34 @@ public class SalesQueryService {
      */
     public List<SalesOrder> queryOrders(Long repId, Long regionId,
                                         LocalDate startDate, LocalDate endDate) {
+
+        // SALES_REP      销售员：只能查自己（repId 过滤）
+        // SALES_MANAGER  销售主管：只能查本大区（regionId 过滤）
+        // SALES_DIRECTOR 总监：查全公司（不过滤）
+
+        UserContext.UserInfo currentUser = UserContext.get();
+
+        if (currentUser != null) {
+
+            if ("SALES_REP".equals(currentUser.role())) {
+                // 普通销售员只能查自己的订单
+                repId = currentUser.repId();
+            } else if ("SALES_MANAGER".equals(currentUser.role())) {
+
+                // 主管只能查本大区（若传入的 regionId 不是自己管辖的大区，强制覆盖）
+                if (regionId == null || !regionId.equals(currentUser.regionId())) {
+                    regionId = currentUser.regionId();
+                }
+            }
+
+            // SALES_DIRECTOR：不限制，查询范围由传入参数决定
+        }
+
+        return doQueryOrders(repId, regionId, startDate, endDate);
+    }
+
+    public List<SalesOrder> doQueryOrders(Long repId, Long regionId,
+                                          LocalDate startDate, LocalDate endDate) {
 
         if (repId != null) {
             return orderRepository.findByRepIdAndOrderDateBetween(repId, startDate, endDate);

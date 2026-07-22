@@ -114,3 +114,7 @@ springdoc:
       packages-to-scan: com.agony.salesAgent.controller
       paths-to-match:
         - "/**"
+
+app:
+  auth:
+    enabled: false   # true=开启权限，false=开发测试时关闭
