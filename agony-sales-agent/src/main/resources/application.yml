@@ -66,13 +66,13 @@ langchain4j:
 
 
 # Sa-Token 配置（轻量权限框架）
-#sa-token:
-#  token-name: Authorization
-#  timeout: 86400
-#  is-concurrent: true
-#  is-share: true
-#  token-style: uuid
-#  is-log: false
+sa-token:
+  token-name: Authorization
+  timeout: 86400
+  is-concurrent: true
+  is-share: true
+  token-style: uuid
+  is-log: false
 
 # Actuator
 management:
@@ -87,18 +87,18 @@ management:
 
 
 # 应用自定义配置
-#sales-agent:
-#  tool:
-#    anomaly-threshold-days: 5
-#    trend-drop-threshold: 0.3
-#
-#logging:
-#  level:
-#    com.agony.salesAgent: DEBUG
-#    dev.langchain4j: INFO
-#app:
-#  auth:
-#    enabled: false
+sales-agent:
+  tool:
+    anomaly-threshold-days: 5
+    trend-drop-threshold: 0.3
+
+logging:
+  level:
+    com.agony.salesAgent: DEBUG
+    dev.langchain4j: INFO
+app:
+  auth:
+    enabled: false # true=开启权限，false=开发测试时关闭
 
 # springdoc-openapi项目配置
 springdoc:
@@ -114,7 +114,3 @@ springdoc:
       packages-to-scan: com.agony.salesAgent.controller
       paths-to-match:
         - "/**"
-
-app:
-  auth:
-    enabled: false   # true=开启权限，false=开发测试时关闭
