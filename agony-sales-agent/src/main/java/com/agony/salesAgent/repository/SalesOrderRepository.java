@@ -94,4 +94,38 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long> {
     Long countCompletedByRegion(@Param("regionId") Long regionId,
                                 @Param("start") LocalDate start,
                                 @Param("end") LocalDate end);
+
+    // 按大区过滤的退单率统计
+    @Query("SELECT o.repId, " +
+            "SUM(CASE WHEN o.status = 'REFUNDED' THEN 1 ELSE 0 END) AS refunded, " +
+            "COUNT(*) AS total " +
+            "FROM SalesOrder o " +
+            "WHERE o.orderDate BETWEEN :start AND :end AND o.regionId = :regionId " +
+            "GROUP BY o.repId")
+    List<Object[]> findRefundRateByRepAndRegion(@Param("start") LocalDate start,
+                                                @Param("end") LocalDate end,
+                                                @Param("regionId") Long regionId);
+
+    // 按大区过滤的产品最后出单日期
+    @Query("SELECT MAX(o.orderDate) FROM SalesOrder o " +
+            "WHERE o.productId = :productId AND o.status = 'COMPLETED' " +
+            "AND o.regionId = :regionId")
+    LocalDate findLastOrderDateByProductAndRegion(@Param("productId") Long productId,
+                                                  @Param("regionId") Long regionId);
+
+    // 单个销售员的退单数
+    @Query("SELECT COUNT(o) FROM SalesOrder o " +
+            "WHERE o.repId = :repId AND o.status = 'REFUNDED' " +
+            "AND o.orderDate BETWEEN :start AND :end")
+    long countRefundedByRep(@Param("repId") Long repId,
+                            @Param("start") LocalDate start,
+                            @Param("end") LocalDate end);
+
+    // 单个销售员的订单总数
+    @Query("SELECT COUNT(o) FROM SalesOrder o " +
+            "WHERE o.repId = :repId " +
+            "AND o.orderDate BETWEEN :start AND :end")
+    long countByRepId(@Param("repId") Long repId,
+                      @Param("start") LocalDate start,
+                      @Param("end") LocalDate end);
 }

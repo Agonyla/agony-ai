@@ -7,6 +7,7 @@ import com.agony.salesAgent.entity.SalesRep;
 import com.agony.salesAgent.repository.ProductRepository;
 import com.agony.salesAgent.repository.SalesRegionRepository;
 import com.agony.salesAgent.repository.SalesRepRepository;
+import com.agony.salesAgent.security.UserContext;
 import com.agony.salesAgent.service.SalesQueryService;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -44,33 +46,51 @@ public class AnomalyDetectionTool {
     @Tool("""
             自动检测销售数据中的所有异常，包括：大区订单量骤降、产品连续零销售、销售员退单率异常、销售员业绩骤降。
             适用于：有没有异常、风险排查、预警检测等场景。
-            无需传入参数，系统自动全面扫描。
+            无需传入参数，系统根据当前用户权限自动扫描可见范围内的数据。"
             """)
     public String detectAllAnomalies() {
 
-        log.info("工具调用-detectAllAnomalies: 开始全面异常检测");
+        UserContext.UserInfo user = UserContext.get();
+        String role = user != null ? user.role() : "SALES_DIRECTOR";
+        Long regionId = user != null ? user.regionId() : null;
+        Long repId = user != null ? user.repId() : null;
+
+        log.info("工具调用-detectAllAnomalies: role={}, regionId={}, repId={}", role, regionId, repId);
 
         List<AnomalyDTO> anomalies = new ArrayList<>();
 
         try {
-            anomalies.addAll(detectRegionDropAnomalies());
-            anomalies.addAll(detectZeroSaleProducts());
-            anomalies.addAll(detectHighRefundReps());
-            anomalies.addAll(detectRepPerformanceDrop());
+            switch (role) {
+                case "SALES_DIRECTOR" -> {
+                    anomalies.addAll(detectRegionDropAnomalies(null));
+                    anomalies.addAll(detectZeroSaleProducts(null));
+                    anomalies.addAll(detectHighRefundReps(null));
+                    anomalies.addAll(detectRepPerformanceDrop(null));
+                }
+                case "SALES_MANAGER" -> {
+                    anomalies.addAll(detectRegionDropAnomalies(regionId));
+                    anomalies.addAll(detectZeroSaleProducts(regionId));
+                    anomalies.addAll(detectHighRefundReps(regionId));
+                    anomalies.addAll(detectRepPerformanceDrop(regionId));
+                }
+                case "SALES_REP" -> {
+                    anomalies.addAll(detectHighRefundForSelf(repId));
+                    anomalies.addAll(detectPerformanceDropForSelf(repId));
+                }
+                default -> {
+                    return "无法识别当前用户角色，请重新登录";
+                }
+            }
         } catch (Exception e) {
             log.error("异常检测出错", e);
             return "异常检测过程中出现问题，请稍后重试";
         }
 
         if (anomalies.isEmpty()) {
-            return "当前数据未检测到明显异常，销售数据运行正常。";
+            return "当前数据未检测到明显异常，您可见范围内的销售数据运行正常。";
         }
 
-        // 按优先级排序：HIGH > MEDIUM > LOW
-        anomalies.sort((a, b) -> {
-            int order = severityOrder(a.severity()) - severityOrder(b.severity());
-            return order;
-        });
+        anomalies.sort((a, b) -> severityOrder(a.severity()) - severityOrder(b.severity()));
 
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("异常检测结果：共发现 %d 个异常\n\n", anomalies.size()));
@@ -90,121 +110,156 @@ public class AnomalyDetectionTool {
         return sb.toString();
     }
 
-    // ============================================================
-    // 检测一：大区订单量骤降
-    // ============================================================
-    private List<AnomalyDTO> detectRegionDropAnomalies() {
+    // 检测一：大区订单量骤降（filterRegionId 为 null 表示扫描全部大区）
+    private List<AnomalyDTO> detectRegionDropAnomalies(Long filterRegionId) {
         List<AnomalyDTO> result = new ArrayList<>();
         LocalDate today = LocalDate.now();
-
-        // 近 2 周 vs 过去 4 周每 2 周的平均
         LocalDate recentStart = today.minusWeeks(2);
-        LocalDate recentEnd = today;
         LocalDate baseStart = today.minusWeeks(6);
         LocalDate baseEnd = today.minusWeeks(2).minusDays(1);
 
-        for (SalesRegion region : regionRepository.findAll()) {
-            Long recentCount = queryService.queryOrderCount(region.getId(), recentStart, recentEnd);
-            Long baseCount = queryService.queryOrderCount(region.getId(), baseStart, baseEnd);
+        List<SalesRegion> regions = filterRegionId != null
+                ? regionRepository.findAllById(List.of(filterRegionId))
+                : regionRepository.findAll();
 
-            // 基准期 4 周折算成每 2 周平均
+        for (SalesRegion region : regions) {
+            Long recentCount = queryService.queryOrderCount(region.getId(), recentStart, today);
+            Long baseCount = queryService.queryOrderCount(region.getId(), baseStart, baseEnd);
             double baseAvg = baseCount / 2.0;
-            if (baseAvg < 2) continue; // 样本量太小，忽略
+            if (baseAvg < 2) continue;
 
             double dropRate = (baseAvg - recentCount) / baseAvg;
             if (dropRate > trendDropThreshold) {
                 String severity = dropRate > 0.6 ? "HIGH" : "MEDIUM";
-                result.add(new AnomalyDTO(
-                        "大区订单量骤降",
-                        severity,
-                        region.getName(),
+                result.add(new AnomalyDTO("大区订单量骤降", severity, region.getName(),
                         String.format("近 2 周订单量 %d 笔，过去 4 周均值 %.1f 笔/两周，下降 %.0f%%",
                                 recentCount, baseAvg, dropRate * 100),
-                        "建议联系大区负责人确认原因，检查是否有系统问题或市场变化"
-                ));
+                        "建议联系大区负责人确认原因"));
             }
         }
         return result;
     }
 
-    // ============================================================
-    // 检测二：产品连续零销售
-    // ============================================================
-    private List<AnomalyDTO> detectZeroSaleProducts() {
+    // 检测二：产品连续零销售（按大区过滤）
+    private List<AnomalyDTO> detectZeroSaleProducts(Long filterRegionId) {
         List<AnomalyDTO> result = new ArrayList<>();
         LocalDate today = LocalDate.now();
 
         for (Product product : productRepository.findByStatus("ACTIVE")) {
-            LocalDate lastSaleDate = queryService.queryLastOrderDate(product.getId());
-            if (lastSaleDate == null) continue; // 从未销售的新品，跳过
+            LocalDate lastSaleDate = filterRegionId != null
+                    ? queryService.queryLastOrderDateByRegion(product.getId(), filterRegionId)
+                    : queryService.queryLastOrderDate(product.getId());
+            if (lastSaleDate == null) continue;
 
-            long daysWithoutSale = ChronoUnit.DAYS.between(lastSaleDate, today);
-            if (daysWithoutSale >= zeroSaleThresholdDays) {
-                String severity = daysWithoutSale >= 14 ? "HIGH"
-                        : daysWithoutSale >= 7 ? "MEDIUM" : "LOW";
-                result.add(new AnomalyDTO(
-                        "产品连续零销售",
-                        severity,
+            long days = ChronoUnit.DAYS.between(lastSaleDate, today);
+            if (days >= zeroSaleThresholdDays) {
+                String severity = days >= 14 ? "HIGH" : days >= 7 ? "MEDIUM" : "LOW";
+                result.add(new AnomalyDTO("产品连续零销售", severity,
                         product.getName() + "（" + product.getSkuCode() + "）",
-                        String.format("已连续 %d 天无销售订单，上次出单日期：%s",
-                                daysWithoutSale, lastSaleDate),
-                        "检查产品是否下架、库存是否充足、价格是否有竞争力"
-                ));
+                        String.format("已连续 %d 天无销售订单", days),
+                        "检查产品是否下架、库存是否充足"));
             }
         }
         return result;
     }
 
-    // ============================================================
-    // 检测三：销售员退单率异常
-    // ============================================================
-    private List<AnomalyDTO> detectHighRefundReps() {
+    // 检测三：销售员退单率异常（按大区过滤）
+    private List<AnomalyDTO> detectHighRefundReps(Long filterRegionId) {
         List<AnomalyDTO> result = new ArrayList<>();
         LocalDate end = LocalDate.now();
         LocalDate start = end.minusDays(30);
 
-        List<Object[]> refundData = queryService.queryRefundRates(start, end);
+        List<Object[]> refundData = filterRegionId != null
+                ? queryService.queryRefundRatesByRegion(start, end, filterRegionId)
+                : queryService.queryRefundRates(start, end);
+
         for (Object[] row : refundData) {
-            Long repId = ((Number) row[0]).longValue();
+            Long rid = ((Number) row[0]).longValue();
             long refunded = ((Number) row[1]).longValue();
             long total = ((Number) row[2]).longValue();
-
-            if (total < 3) continue; // 样本量太小
+            if (total < 3) continue;
 
             double refundRate = (double) refunded / total;
             if (refundRate > 0.15) {
-                String repName = queryService.getRepName(repId);
-                String severity = refundRate > 0.3 ? "HIGH" : "MEDIUM";
-                result.add(new AnomalyDTO(
-                        "销售员退单率异常",
-                        severity,
-                        repName,
-                        String.format("近 30 天退单率 %.0f%%（%d/%d 单），明显高于团队平均水平",
-                                refundRate * 100, refunded, total),
-                        "建议与该销售员沟通了解原因，排查是否存在虚报订单或客户不满意的情况"
-                ));
+                String repName = queryService.getRepName(rid);
+                result.add(new AnomalyDTO("销售员退单率异常",
+                        refundRate > 0.3 ? "HIGH" : "MEDIUM", repName,
+                        String.format("近 30 天退单率 %.0f%%（%d/%d 单）", refundRate * 100, refunded, total),
+                        "建议沟通了解原因"));
             }
         }
         return result;
     }
 
-    // ============================================================
-    // 检测四：销售员业绩骤降
-    // ============================================================
-    private List<AnomalyDTO> detectRepPerformanceDrop() {
+    // 检测四：销售员业绩骤降（按大区过滤）
+    private List<AnomalyDTO> detectRepPerformanceDrop(Long filterRegionId) {
         List<AnomalyDTO> result = new ArrayList<>();
         LocalDate today = LocalDate.now();
         LocalDate curStart = today.minusDays(30);
         LocalDate prevStart = today.minusDays(60);
         LocalDate prevEnd = today.minusDays(31);
 
-        for (SalesRep rep : repRepository.findByRole("SALES_REP")) {
-            BigDecimal current = queryService.queryTotalAmount(null,
-                    curStart, today); // 简化：实际应按 repId 查
-            // 实际实现需要 Repository 支持 repId 的 sumAmount
-            // 这里演示逻辑，完整实现见工具层单元测试那节
+        List<SalesRep> reps = filterRegionId != null
+                ? repRepository.findByRoleAndRegionId("SALES_REP", filterRegionId)
+                : repRepository.findByRole("SALES_REP");
+
+        for (SalesRep rep : reps) {
+            BigDecimal current = queryService.queryTotalAmountByRep(rep.getId(), curStart, today);
+            BigDecimal previous = queryService.queryTotalAmountByRep(rep.getId(), prevStart, prevEnd);
+            if (previous == null || previous.compareTo(BigDecimal.ZERO) == 0) continue;
+            if (current == null) current = BigDecimal.ZERO;
+
+            double dropRate = previous.subtract(current)
+                    .divide(previous, 4, RoundingMode.HALF_UP).doubleValue();
+            if (dropRate > 0.4) {
+                result.add(new AnomalyDTO("销售员业绩骤降",
+                        dropRate > 0.7 ? "HIGH" : "MEDIUM", rep.getName(),
+                        String.format("近 30 天 ¥%.0f，上期 ¥%.0f，下降 %.0f%%", current, previous, dropRate * 100),
+                        "建议跟进确认原因"));
+            }
         }
-        return result; // 简化返回空，完整实现在真实项目代码里
+        return result;
+    }
+
+    // 普通销售员专用：只检测自己的退单率
+    private List<AnomalyDTO> detectHighRefundForSelf(Long repId) {
+        List<AnomalyDTO> result = new ArrayList<>();
+        LocalDate end = LocalDate.now();
+        LocalDate start = end.minusDays(30);
+
+        long refunded = queryService.queryRefundCountByRep(repId, start, end);
+        long total = queryService.queryOrderCountByRep(repId, start, end);
+        if (total < 3) return result;
+
+        double refundRate = (double) refunded / total;
+        if (refundRate > 0.15) {
+            result.add(new AnomalyDTO("您的退单率偏高",
+                    refundRate > 0.3 ? "HIGH" : "MEDIUM", "本人",
+                    String.format("近 30 天退单率 %.0f%%（%d/%d 单）", refundRate * 100, refunded, total),
+                    "建议检查退单原因，是否有客户投诉需要跟进"));
+        }
+        return result;
+    }
+
+    // 普通销售员专用：只检测自己的业绩变化
+    private List<AnomalyDTO> detectPerformanceDropForSelf(Long repId) {
+        List<AnomalyDTO> result = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        BigDecimal current = queryService.queryTotalAmountByRep(repId, today.minusDays(30), today);
+        BigDecimal previous = queryService.queryTotalAmountByRep(repId, today.minusDays(60), today.minusDays(31));
+
+        if (previous == null || previous.compareTo(BigDecimal.ZERO) == 0) return result;
+        if (current == null) current = BigDecimal.ZERO;
+
+        double dropRate = previous.subtract(current)
+                .divide(previous, 4, RoundingMode.HALF_UP).doubleValue();
+        if (dropRate > 0.4) {
+            result.add(new AnomalyDTO("您的业绩明显下滑",
+                    dropRate > 0.7 ? "HIGH" : "MEDIUM", "本人",
+                    String.format("近 30 天 ¥%.0f，上期 ¥%.0f，下降 %.0f%%", current, previous, dropRate * 100),
+                    "建议主动梳理客户跟进情况，与主管沟通是否需要支持"));
+        }
+        return result;
     }
 
     private int severityOrder(String severity) {

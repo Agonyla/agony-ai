@@ -322,4 +322,39 @@ public class SalesQueryService {
                 .map(SalesRep::getId)
                 .orElse(null);
     }
+
+    /**
+     * 按大区过滤的退单率统计
+     */
+    public List<Object[]> queryRefundRatesByRegion(LocalDate start, LocalDate end, Long regionId) {
+        return orderRepository.findRefundRateByRepAndRegion(start, end, regionId);
+    }
+
+    /**
+     * 按大区过滤的产品最后出单日期
+     */
+    public LocalDate queryLastOrderDateByRegion(Long productId, Long regionId) {
+        return orderRepository.findLastOrderDateByProductAndRegion(productId, regionId);
+    }
+
+    /**
+     * 单个销售员的退单数
+     */
+    public long queryRefundCountByRep(Long repId, LocalDate start, LocalDate end) {
+        return orderRepository.countRefundedByRep(repId, start, end);
+    }
+
+    /**
+     * 单个销售员的订单总数
+     */
+    public long queryOrderCountByRep(Long repId, LocalDate start, LocalDate end) {
+        return orderRepository.countByRepId(repId, start, end);
+    }
+
+    /**
+     * 单个销售员的销售额（复用已有的 sumAmountByRep）
+     */
+    public BigDecimal queryTotalAmountByRep(Long repId, LocalDate start, LocalDate end) {
+        return orderRepository.sumAmountByRep(repId, start, end);
+    }
 }
