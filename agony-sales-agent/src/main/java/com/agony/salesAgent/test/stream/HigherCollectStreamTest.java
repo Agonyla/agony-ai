@@ -41,6 +41,9 @@ public class HigherCollectStreamTest {
         System.out.println(t3(students));
         // 4. 按城市分组，收集每个城市所有学生的兴趣爱好，去重
         // 5. 按城市分组，统计每个城市的最高分、最低分、平均分、人数
+
+        t5(students);
+
         // 6. 找出每个年龄段中成绩最高的学生，如果同分，保留年龄更小的
         // 7. 把学生按照城市分组，每个城市只保留成绩前三名
         // 8. 将学生列表转成 Map，城市作为 key，该城市最高分学生作为 value
@@ -83,6 +86,25 @@ public class HigherCollectStreamTest {
     }
 
     // 5.
+    public static void t5(List<Student> students) {
+
+        Map<String, DoubleSummaryStatistics> doubleCollect = students.stream()
+                .collect(Collectors.groupingBy(Student::city,
+                        Collectors.summarizingDouble(Student::score)));
+
+        for (Map.Entry<String, DoubleSummaryStatistics> entry : doubleCollect.entrySet()) {
+            System.out.println(entry.getKey() + " : " + entry.getValue().getMax());
+        }
+
+        Map<String, IntSummaryStatistics> intCollect = students.stream()
+                .collect(Collectors.groupingBy(Student::city,
+                        Collectors.summarizingInt(Student::score)));
+
+        for (Map.Entry<String, IntSummaryStatistics> entry : intCollect.entrySet()) {
+            System.out.println(entry.getKey() + " : " + entry.getValue().getMax());
+        }
+    }
+
     // 6.
     // 7. ！
     public static Map<String, List<Student>> t7(List<Student> students) {
