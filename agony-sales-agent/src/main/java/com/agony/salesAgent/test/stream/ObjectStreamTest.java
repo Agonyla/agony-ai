@@ -36,6 +36,7 @@ public class ObjectStreamTest {
         // 12. 找出成绩前 3 名的学生姓名
         // 13. 找出成绩大于平均分的学生
         // 14. 按成绩是否及格分组
+        System.out.println(groupByPassScore(students));
         // 15. 获取每个年龄中成绩最高的学生
         Map<Integer, Student> theHighestScoreInEachAge = findTheHighestScoreInEachAge(students);
         System.out.println(theHighestScoreInEachAge);
@@ -160,10 +161,15 @@ public class ObjectStreamTest {
     }
 
     // 14. 按成绩是否及格分组
-    public static Map<Boolean, List<Student>> groupByPassScore(List<Student> students) {
+    public static Map<String, List<Student>> groupByPassScore(List<Student> students) {
+
+        // return students.stream()
+        //         .collect(Collectors.partitioningBy(student -> student.score() >= 60));
 
         return students.stream()
-                .collect(Collectors.partitioningBy(student -> student.score() >= 60));
+                .collect(Collectors.groupingBy(
+                        student -> student.score() >= 60 ? "及格" : "不及格"
+                ));
     }
 
     // 15. 获取每个年龄中成绩最高的学生
