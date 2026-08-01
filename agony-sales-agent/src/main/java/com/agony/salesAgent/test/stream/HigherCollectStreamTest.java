@@ -44,7 +44,7 @@ public class HigherCollectStreamTest {
 
         t5(students);
 
-        // 6. 找出每个年龄段中成绩最高的学生，如果同分，保留年龄更小的
+        // 6. 按城市分组，找出每个城市中成绩最高的学生，如果同分，保留年龄更小的
         // 7. 把学生按照城市分组，每个城市只保留成绩前三名
         // 8. 将学生列表转成 Map，城市作为 key，该城市最高分学生作为 value
         System.out.println(t8(students));
@@ -106,6 +106,42 @@ public class HigherCollectStreamTest {
     }
 
     // 6.
+    public static Map<String, Student> t6(List<Student> students) {
+
+        // toMap: 一个key对应一个value
+        Map<String, Student> collect = students.stream()
+                .collect(Collectors.toMap(
+                        Student::city,
+                        s -> s
+                ));
+
+        // groupingBy: 一个key对应一组value
+        Map<String, List<String>> collect1 = students.stream()
+                .collect(Collectors.groupingBy(
+                        Student::city,
+                        Collectors.mapping(
+                                Student::name,
+                                Collectors.toList())));
+
+        return students.stream()
+                .collect(Collectors.groupingBy(
+                        Student::city,
+                        Collectors.collectingAndThen(
+                                Collectors.maxBy(Comparator.comparingInt(Student::score)
+                                        .thenComparing(Comparator.comparing(Student::age).reversed())
+                                ),
+                                Optional::get
+                        )
+                ));
+
+        // return students.stream()
+        //         .collect(Collectors.toMap(
+        //                 Student::city,
+        //                 Function.identity(),
+        //                 BinaryOperator.maxBy(Comparator.comparingInt(Student::score)
+        //                         .thenComparing(Comparator.comparing(Student::age).reversed()))));
+    }
+
     // 7. ！
     public static Map<String, List<Student>> t7(List<Student> students) {
 
