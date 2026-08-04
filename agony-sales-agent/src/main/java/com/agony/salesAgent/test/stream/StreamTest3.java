@@ -2,10 +2,7 @@ package com.agony.salesAgent.test.stream;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -73,6 +70,7 @@ public class StreamTest3 {
         // 8. 找出每个用户最近的一笔订单
         // 9. 按城市分组，收集每个城市所有订单标签，去重并排序
         // 10. 找出已支付订单总金额最高的前 3 个用户
+        System.out.println(t10(orders));
     }
 
     // 1. 查询所有已支付订单，按金额降序排序，取前 5 条
@@ -212,8 +210,63 @@ public class StreamTest3 {
                         (s1, s2) -> s1 + "-" + s2
                 ));
     }
+
     // 8. 找出每个用户最近的一笔订单
+    public static Map<String, Order> t8(List<Order> orders) {
+
+        // return orders.stream()
+        //         .collect(Collectors.groupingBy(
+        //                 Order::userId,
+        //                 Collectors.collectingAndThen(
+        //                         Collectors.maxBy(Comparator.comparing(Order::orderDate)),
+        //                         Optional::get
+        //                 )
+        //         ));
+
+        return orders.stream()
+                .collect(Collectors.toMap(
+                        Order::userId,
+                        Function.identity(),
+                        (o1, o2) -> o1.orderDate().isAfter(o2.orderDate()) ? o1 : o2
+                ));
+    }
+
     // 9. 按城市分组，收集每个城市所有订单标签，去重并排序
+    public static Map<String, Set<String>> t9(List<Order> orders) {
+
+        return orders.stream()
+                .collect(Collectors.groupingBy(
+                        Order::city,
+                        Collectors.flatMapping(
+                                order -> order.tags().stream(),
+                                Collectors.toCollection(TreeSet::new)
+                        )
+                ));
+    }
+
     // 10. 找出已支付订单总金额最高的前 3 个用户
+    public static Map<String, BigDecimal> t10(List<Order> orders) {
+
+        return orders.stream()
+                .filter(o -> "PAID".equals(o.status()))
+                .collect(Collectors.groupingBy(
+                        Order::userId,
+                        Collectors.reducing(
+                                BigDecimal.ZERO,
+                                Order::amount,
+                                BigDecimal::add
+                        )
+                ))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed())
+                .limit(3)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (oldVal, newVal) -> oldVal,
+                        LinkedHashMap::new
+                ));
+    }
 
 }
